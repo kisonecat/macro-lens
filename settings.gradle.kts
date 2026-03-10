@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "phood"
+rootProject.name = "macro-lens"
 include(":app")

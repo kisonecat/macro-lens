@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/claude-code) when working 
 
 ## Project Overview
 
-Phood is an Android food tracking app that uses OpenAI's GPT-4o vision model to analyze photos of food and estimate nutritional content (calories, protein, carbs, fat).
+Macro Lens is an Android food tracking app that uses OpenAI's GPT-4o vision model to analyze photos of food and estimate nutritional content (calories, protein, carbs, fat).
+
+The name is a double meaning: "macro" as in macronutrients and "macro lens" as in close-up photography.
 
 ## Build & Run Commands
 
@@ -54,6 +56,7 @@ CameraScreen → CameraViewModel → LlmRepository → OpenAiClient
 - **Repositories** return `Result<T>` for operations that can fail
 - **Composables** receive callbacks for navigation (e.g., `onFoodCaptured`, `onSettingsClick`)
 - **No Hilt/Dagger** — manual DI via `AppContainer` singleton in `PhoodApplication`
+- **Package name** remains `com.phood` (internal implementation detail)
 
 ## Common Tasks
 

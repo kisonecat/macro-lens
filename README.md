@@ -1,6 +1,8 @@
-# Phood
+# Macro Lens
 
 A food tracking Android app that uses AI to analyze photos of your meals and estimate nutritional content.
+
+The name is a double meaning: **macro** as in macronutrients (calories, protein, carbs, fat) and **macro lens** as in close-up photography—capturing both core features in two words.
 
 ## Features
 
