@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Macro Lens</string>
+    <string name="widget_description">Today\'s macro totals</string>
+    <string name="widget_label">Macro Lens Totals</string>
 </resources>

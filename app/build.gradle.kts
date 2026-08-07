@@ -7,13 +7,13 @@ plugins {
 }
 
 android {
-    namespace = "com.phood"
-    compileSdk = 34
+    namespace = "com.macrolens"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.phood"
+        applicationId = "com.macrolens"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -77,6 +77,10 @@ dependencies {
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
+    // Glance (home screen widget)
+    implementation("androidx.glance:glance-appwidget:1.1.1")
+    implementation("androidx.glance:glance-material3:1.1.1")
+
     // CameraX
     val cameraVersion = "1.4.1"
     implementation("androidx.camera:camera-core:$cameraVersion")
@@ -86,6 +90,9 @@ dependencies {
 
     // ExifInterface for image rotation
     implementation("androidx.exifinterface:exifinterface:1.3.7")
+
+    // Image loading
+    implementation("io.coil-kt:coil-compose:2.7.0")
 
     // Networking
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

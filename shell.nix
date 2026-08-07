@@ -1,16 +1,34 @@
-{ pkgs ? import <nixpkgs> {config.android_sdk.accept_license = true; config.allowUnfree = true;} }:
+{ pkgs ? import <nixpkgs> {
+    config.android_sdk.accept_license = true;
+    config.allowUnfree = true;
+  }
+}:
 
 let
-  androidSdk = pkgs.androidenv.androidPkgs.androidsdk;
+  androidComposition = pkgs.androidenv.composeAndroidPackages {
+    buildToolsVersions = [ "34.0.0" ];
+    platformVersions = [ "35" ];
+    includeEmulator = false;
+    includeNDK = false;
+    includeSources = false;
+    includeSystemImages = false;
+  };
+  androidSdk = androidComposition.androidsdk;
 in
 pkgs.mkShell {
   packages = with pkgs; [
-    android-studio
+    jdk17
   ];
-  buildInputs = with pkgs; [
+  buildInputs = [
     androidSdk
-    glibc
+    pkgs.glibc
   ];
-  # override the aapt2 that gradle uses with the nix-shipped version
-  GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/28.0.3/aapt2";
+  ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
+  ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
+  # Point gradle at the nix-provided aapt2 rather than trying to download its own
+  GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/34.0.0/aapt2";
+  shellHook = ''
+    export PATH="${androidSdk}/libexec/android-sdk/platform-tools:$PATH"
+    echo "sdk.dir=${androidSdk}/libexec/android-sdk" > local.properties
+  '';
 }
