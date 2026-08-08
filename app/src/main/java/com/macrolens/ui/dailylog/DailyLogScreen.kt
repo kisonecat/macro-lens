@@ -54,7 +54,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import com.macrolens.PhoodApplication
 import com.macrolens.data.local.EntryStatus
 import com.macrolens.data.local.FoodEntry
@@ -156,7 +158,8 @@ fun DailyLogScreen(
                 FoodEntryCard(
                     entry = entry,
                     onDelete = { viewModel.deleteEntry(entry) },
-                    onRetry = { viewModel.retryEntry(entry) }
+                    onRetry = { viewModel.retryEntry(entry) },
+                    onModify = { viewModel.showModifyDialog(entry) }
                 )
             }
 
@@ -189,6 +192,16 @@ fun DailyLogScreen(
             error = uiState.textEntryError,
             onDismiss = { viewModel.dismissTextEntry() },
             onSubmit = { viewModel.submitTextEntry(it) }
+        )
+    }
+
+    uiState.entryToModify?.let { entry ->
+        ModifyEntryDialog(
+            entry = entry,
+            isModifying = uiState.isModifying,
+            error = uiState.modifyError,
+            onDismiss = { viewModel.dismissModifyDialog() },
+            onSubmit = { viewModel.submitModification(entry, it) }
         )
     }
 }
@@ -348,11 +361,13 @@ private fun MacroItem(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun FoodEntryCard(
     entry: FoodEntry,
     onDelete: () -> Unit,
-    onRetry: () -> Unit
+    onRetry: () -> Unit,
+    onModify: () -> Unit
 ) {
     val cardColor = when (entry.status) {
         EntryStatus.FAILED -> MaterialTheme.colorScheme.errorContainer
@@ -360,7 +375,13 @@ private fun FoodEntryCard(
     }
     val cardModifier = Modifier
         .fillMaxWidth()
-        .let { if (entry.status == EntryStatus.FAILED) it.clickable { onRetry() } else it }
+        .let {
+            when (entry.status) {
+                EntryStatus.FAILED -> it.clickable { onRetry() }
+                EntryStatus.COMPLETED -> it.combinedClickable(onClick = {}, onLongClick = onModify)
+                else -> it
+            }
+        }
 
     Card(
         modifier = cardModifier,
@@ -493,6 +514,62 @@ private fun TextEntryDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss, enabled = !isAnalyzing) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun ModifyEntryDialog(
+    entry: FoodEntry,
+    isModifying: Boolean,
+    error: String?,
+    onDismiss: () -> Unit,
+    onSubmit: (String) -> Unit
+) {
+    var text by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = { if (!isModifying) onDismiss() },
+        title = { Text("Modify entry") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = entry.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    placeholder = { Text("e.g. I only ate half") },
+                    enabled = !isModifying,
+                    singleLine = false,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (isModifying) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+                if (error != null) {
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSubmit(text.trim()) },
+                enabled = !isModifying && text.isNotBlank()
+            ) {
+                Text("Update")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isModifying) {
                 Text("Cancel")
             }
         }

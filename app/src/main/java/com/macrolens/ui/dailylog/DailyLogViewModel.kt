@@ -26,7 +26,10 @@ data class DailyLogUiState(
     val isLoadingMessage: Boolean = false,
     val showTextEntry: Boolean = false,
     val isAnalyzingText: Boolean = false,
-    val textEntryError: String? = null
+    val textEntryError: String? = null,
+    val entryToModify: FoodEntry? = null,
+    val isModifying: Boolean = false,
+    val modifyError: String? = null
 )
 
 class DailyLogViewModel(
@@ -142,6 +145,36 @@ class DailyLogViewModel(
                         else -> error.message ?: "Failed to analyze"
                     }
                     _uiState.value = _uiState.value.copy(isAnalyzingText = false, textEntryError = message)
+                }
+        }
+    }
+
+    fun showModifyDialog(entry: FoodEntry) {
+        _uiState.value = _uiState.value.copy(entryToModify = entry, modifyError = null)
+    }
+
+    fun dismissModifyDialog() {
+        _uiState.value = _uiState.value.copy(
+            entryToModify = null,
+            isModifying = false,
+            modifyError = null
+        )
+    }
+
+    fun submitModification(entry: FoodEntry, text: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isModifying = true, modifyError = null)
+            llmRepository.modifyFoodEntry(entry, text)
+                .onSuccess { estimate ->
+                    foodRepository.updateEntry(entry.id, estimate)
+                    _uiState.value = _uiState.value.copy(entryToModify = null, isModifying = false)
+                }
+                .onFailure { error ->
+                    val message = when {
+                        error.message?.contains("API key") == true -> "Please set your API key in Settings"
+                        else -> error.message ?: "Failed to update entry"
+                    }
+                    _uiState.value = _uiState.value.copy(isModifying = false, modifyError = message)
                 }
         }
     }

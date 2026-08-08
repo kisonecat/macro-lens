@@ -83,12 +83,13 @@ class OpenAiClient {
 
                 val request = SimpleChatRequest(
                     model = "gpt-5.5",
-                    messages = listOf(SimpleMessage(role = "user", content = prompt))
+                    messages = listOf(SimpleMessage(role = "user", content = prompt)),
+                    responseFormat = ResponseFormat("json_object")
                 )
 
                 val response = post(apiKey, json.encodeToString(request))
                 val content = response.choices.first().message.content
-                val estimate = json.decodeFromString<FoodEstimate>(extractJson(content))
+                val estimate = json.decodeFromString<FoodEstimate>(content)
 
                 if (!estimate.found) {
                     throw NoFoodFoundException(estimate.description.ifEmpty { "Not recognized as food" })
@@ -96,6 +97,59 @@ class OpenAiClient {
                 estimate
             }
         }
+
+    suspend fun modifyFoodEntry(
+        apiKey: String,
+        originalDescription: String,
+        originalCalories: Int,
+        originalProteinG: Int,
+        originalCarbsG: Int,
+        originalFatG: Int,
+        originalFruitVegServings: Int,
+        userModification: String
+    ): Result<FoodEstimate> = withContext(Dispatchers.IO) {
+        runCatching {
+            val prompt = """
+                The user previously logged this food entry:
+                - Description: "$originalDescription"
+                - Calories: $originalCalories kcal
+                - Protein: ${originalProteinG}g
+                - Carbs: ${originalCarbsG}g
+                - Fat: ${originalFatG}g
+                - Fruit/Veg servings: $originalFruitVegServings
+
+                The user now says: "$userModification"
+
+                Update the nutritional values based on the user's correction and respond with revised numbers.
+
+                IMPORTANT: You MUST respond with ONLY a valid JSON object, no other text.
+
+                {"found":true,"calories":300,"protein_g":25,"carbs_g":30,"fat_g":12,"fruit_veg_servings":0,"description":"updated description"}
+
+                Rules:
+                - Honor the user's modification exactly (e.g. "I only ate half" means halve all numeric values)
+                - All numeric values are integers
+                - fruit_veg_servings: count of fruit/vegetable servings
+                - description: clean 2-5 word label reflecting what was actually consumed
+                - NEVER respond with plain text, ONLY JSON
+            """.trimIndent()
+
+            val request = SimpleChatRequest(
+                model = "gpt-5.5",
+                messages = listOf(SimpleMessage(role = "user", content = prompt)),
+                responseFormat = ResponseFormat("json_object")
+            )
+
+            val response = post(apiKey, json.encodeToString(request))
+            val content = response.choices.first().message.content
+            val estimate = json.decodeFromString<FoodEstimate>(content)
+
+            if (!estimate.found) {
+                throw NoFoodFoundException(estimate.description.ifEmpty { "Not recognized as food" })
+            }
+            estimate
+        }
+    }
 
     class NoFoodFoundException(message: String) : Exception(message)
 

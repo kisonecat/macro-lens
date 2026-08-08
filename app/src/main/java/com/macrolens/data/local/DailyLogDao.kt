@@ -71,4 +71,24 @@ interface DailyLogDao {
 
     @Query("UPDATE food_entries SET status = 'PENDING', errorMessage = NULL WHERE id = :id")
     suspend fun markPending(id: Long)
+
+    @Query("""
+        UPDATE food_entries
+        SET calories = :calories,
+            proteinG = :proteinG,
+            carbsG = :carbsG,
+            fatG = :fatG,
+            fruitVegServings = :fruitVegServings,
+            description = :description
+        WHERE id = :id
+    """)
+    suspend fun updateEntry(
+        id: Long,
+        calories: Int,
+        proteinG: Int,
+        carbsG: Int,
+        fatG: Int,
+        fruitVegServings: Int,
+        description: String
+    )
 }

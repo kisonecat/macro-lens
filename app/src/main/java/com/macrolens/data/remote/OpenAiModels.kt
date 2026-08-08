@@ -1,5 +1,7 @@
 package com.macrolens.data.remote
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -59,6 +61,9 @@ data class ResponseMessage(
     val content: String
 )
 
+@Serializable
+data class ResponseFormat(val type: String)
+
 // Simplified request for text-only messages
 @Serializable
 data class SimpleMessage(
@@ -66,9 +71,13 @@ data class SimpleMessage(
     val content: String
 )
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class SimpleChatRequest(
     val model: String,
     val messages: List<SimpleMessage>,
-    @SerialName("max_completion_tokens") val maxTokens: Int = 256
+    @SerialName("max_completion_tokens") val maxTokens: Int = 256,
+    // Only serialized when explicitly set — omitting it lets the API return plain text
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
+    @SerialName("response_format") val responseFormat: ResponseFormat? = null
 )

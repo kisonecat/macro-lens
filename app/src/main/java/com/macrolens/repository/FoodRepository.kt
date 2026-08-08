@@ -49,4 +49,16 @@ class FoodRepository(private val dao: DailyLogDao) {
         dao.markFailed(id, errorMessage)
 
     suspend fun markPending(id: Long) = dao.markPending(id)
+
+    suspend fun updateEntry(id: Long, estimate: FoodEstimate) {
+        dao.updateEntry(
+            id = id,
+            calories = estimate.calories,
+            proteinG = estimate.proteinG,
+            carbsG = estimate.carbsG,
+            fatG = estimate.fatG,
+            fruitVegServings = estimate.fruitVegServings,
+            description = estimate.description
+        )
+    }
 }

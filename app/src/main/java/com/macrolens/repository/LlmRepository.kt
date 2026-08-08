@@ -1,5 +1,6 @@
 package com.macrolens.repository
 
+import com.macrolens.data.local.FoodEntry
 import com.macrolens.data.local.MacroTotals
 import com.macrolens.data.remote.FoodEstimate
 import com.macrolens.data.remote.OpenAiClient
@@ -23,6 +24,21 @@ class LlmRepository(
             return Result.failure(IllegalStateException("API key not configured"))
         }
         return client.analyzeFood(apiKey, imageBase64)
+    }
+
+    suspend fun modifyFoodEntry(entry: FoodEntry, modification: String): Result<FoodEstimate> {
+        val apiKey = settings.apiKey.first()
+        if (apiKey.isBlank()) return Result.failure(IllegalStateException("API key not configured"))
+        return client.modifyFoodEntry(
+            apiKey = apiKey,
+            originalDescription = entry.description,
+            originalCalories = entry.calories,
+            originalProteinG = entry.proteinG,
+            originalCarbsG = entry.carbsG,
+            originalFatG = entry.fatG,
+            originalFruitVegServings = entry.fruitVegServings,
+            userModification = modification
+        )
     }
 
     suspend fun getInspirationalMessage(totals: MacroTotals): Result<String> {
